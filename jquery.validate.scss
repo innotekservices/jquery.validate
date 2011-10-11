@@ -1,0 +1,54 @@
+@mixin rounded($radius) {
+	        border-radius: $radius;
+	-webkit-border-radius: $radius;
+	   -moz-border-radius: $radius;
+	
+	        background-clip: padding-box;
+	-webkit-background-clip: padding-box;
+	   -moz-background-clip: padding;
+}
+
+@mixin box-shadow($x, $y, $strength, $color) {
+	        box-shadow: $x $y $strength $color;
+	-webkit-box-shadow: $x $y $strength $color;
+	   -moz-box-shadow: $x $y $strength $color;
+	    -ms-box-shadow: $x $y $strength $color;
+	     -o-box-shadow: $x $y $strength $color;
+}
+
+input.invalid {
+	padding-right: 25px;
+	background-image: url(images/invalid.png);
+	background-position: right center;
+	background-repeat: no-repeat;
+}
+
+.input_alert {
+	position: absolute;
+	z-index: 999;
+	
+	&.below {
+		.arrow {
+			position: relative;
+			top: 1px;
+			left: 10px;
+			width: 24px;
+			height: 12px;
+			background: url(images/bubble_arrows.png) -12px 0 no-repeat;
+		}
+	}
+	
+	.message {
+		@include rounded(6px);
+		@include box-shadow(0, 0, 6px, #0096DA);
+		border: 1px solid #0096DA;
+		padding: 0 8px 0 27px;
+		line-height: 30px;
+	}
+	
+	&.notice {
+		.message {
+			background: #FFFFFF url(images/invalid.png) 6px center no-repeat;
+		}
+	}
+}
