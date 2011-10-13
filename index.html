@@ -17,11 +17,11 @@ label input { width: 175px; height: 25px; box-sizing: box-sizing: border-box; -w
 
 <h1>jquery.validate</h1>
 
-<form novalidate>
+<form>
 
-<label for="name"><span>Name:</span><input id="name" type="text" required></label>
+<label for="name"><span>Name:</span><input id="name" type="text" required pattern="alpha"></label>
 <label for="email"><span>Email:</span><input id="email" type="email" required></label>
-<label for="age"><span>Age:</span><input  id="age" type="text" required min="2" max="2"></label>
+<label for="age"><span>Age:</span><input  id="age" type="number" required minlength="2" maxlength="2"></label>
 
 <input type="submit" value="Submit">
 

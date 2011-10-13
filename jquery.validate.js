@@ -1,80 +1,110 @@
 (function ($) {
-	"use strict";
-	var checkForm, checkInput, showAlert, isFormValid, opts = { position: "below", level: "notice" };
+	$.validate = function (event) {
+		var form = $(this),
+			inputs = $("input[type=text], input[type=email], input[type=password]", form),
+			isFormValid = true,
+			defaults = { position: "below" },
+			checkInput, showAlert,
+			regex = {
+				email: /^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,4}$/i,
+				alpha: /^[A-Z]+$/i
+			};
+		
+		checkInput = function () {
+			var elem = $(this),
+				value = elem.val(),
+				length = value.length,
+				required = elem.attr('required'),
+				type = elem.attr('type'),
+				minlength = parseInt(elem.attr('minlength'), 10),
+				maxlength = parseInt(elem.attr('maxlength'), 10),
+				pattern = elem.attr('pattern'),
+				error = false,
+				validationObj = elem.data("validation") || { position: form.data("validate-position") || defaults.position, visible: false, uuid: (elem.attr('id') || elem.attr('name')) + "_" + new Date().valueOf() };
 
-	checkForm = function (event) {
-		var form = $(this), inputs = $("input[type=text], input[type=email], input[type=password]", form);
+			if (required && value === '') {
+				error = "This field is required.";
+			} else if (type === 'email' && !regex.email.test(value)) {
+				error = "Please enter a valid email address.";
+			} else if (length < minlength || length > maxlength) {
+				error = "This field requires ";
+				if (minlength && maxlength) {
+					if (minlength === maxlength) {
+						error += "exactly " + minlength;
+					} else {
+						error += "between " + minlength + " and " + maxlength;
+					}
+				} else if (minlength) {
+					error += "at least " + minlength;
+				} else if (maxlength) {
+					error += "no more than " + maxlength;
+				}
+				error += " characters.";
+			} else if (value !== '' && pattern === 'alpha' && !regex.alpha.test(value)) {
+				error = "This field requires standard alphabet characters, only.";
+			}
 
-		isFormValid = true;
+			if (error) {
+				if (validationObj.alertObj) {
+					validationObj.alertObj.find(".message").html(error);
+				} else {
+					validationObj.alertObj = $('<div id="validate_' + validationObj.uuid + '" class="input_alert ' + validationObj.position + ' notice"><div class="arrow"></div><div class="message">' + error + '</div></div>');
+				}
+				elem.addClass("invalid").data("validation", validationObj).unbind("focus.validation").bind("focus.validation", showAlert);
+				isFormValid = false;
+			} else {
+				if (validationObj.alertObj) {
+					validationObj.alertObj.remove();
+					elem.unbind("focus.validation keyup.validation blur.validation").removeClass("invalid").removeData("validation");
+				}
+			}
+		};
+
+		showAlert = function () {
+			var elem = $(this),
+				validationObj = elem.data("validation"),
+				offset = elem.offset(),
+				width = parseFloat(elem.outerWidth()),
+				height = parseFloat(elem.outerHeight()),
+				start = { opacity: 0 },
+				final = { opacity: 1 };
+
+			if (!validationObj.visible) {
+				$("body").append(validationObj.alertObj);
+				switch (validationObj.position) {
+					case "above":
+						start.top = offset.top - parseFloat(validationObj.alertObj.outerHeight()) + 5;
+						start.left = offset.left;
+						final.top = "-=10";
+					break;
+					case "right":
+						start.left = offset.left + width - 25;
+						start.top = offset.top - ((parseFloat(validationObj.alertObj.outerHeight()) - height) / 2);
+						final.left = "+=10";
+					break;
+					default:
+						start.top = offset.top + (height - 5);
+						start.left = offset.left;
+						final.top = "+=10";
+					break;
+				}
+				validationObj.alertObj.css(start);
+				validationObj.alertObj.animate(final, 250);
+				elem.bind("blur.validation", function () { validationObj.visible = false; elem.data("validation", validationObj); validationObj.alertObj.remove(); });
+				elem.bind("keyup.validation", checkInput);
+				validationObj.visible = true;
+				elem.data("validation", validationObj);
+			}
+		}
+
 		inputs.each(checkInput);
 
 		if (!isFormValid) {
 			$(".invalid:first", form).focus();
-
 			event.stopImmediatePropagation();
 			return false;
 		}
 	};
 
-	checkInput = function () {
-		var elem = $(this),
-			value = elem.val(),
-			length = value.length,
-			required = elem.attr('required'),
-			type = elem.attr('type'),
-			min = parseInt(elem.attr('min'), 10),
-			max = parseInt(elem.attr('max'), 10),
-			pattern = elem.attr('pattern'),
-			error = false,
-			isEmail = /^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,4}$/i;
-
-		if (required && value === '') {
-			error = "This field is required.";
-		} else if (type === 'email' && !isEmail.test(value)) {
-			error = "Please enter a valid email address.";
-		} else if (length < min || length > max) {
-			error = "This field requires ";
-			if (min && max) {
-				if (min === max) {
-					error += "exactly " + min;
-				} else {
-					error += "between " + min + " and " + max;
-				}
-			} else if (min) {
-				error += "at least " + min;
-			} else if (max) {
-				error += "no more than " + max;
-			}
-			error += " characters.";
-		}
-
-		if (error) {
-			elem.addClass("invalid").data("validation", {
-				position: opts.position,
-				level: opts.level,
-				message: error,
-				visible: false
-			}).unbind("focus.validation").bind("focus.validation", showAlert);
-
-			isFormValid = false;
-		} else {
-			elem.removeClass("invalid").removeData("validation").unbind("focus.validation");
-		}
-	};
-
-	showAlert = function () {
-		var elem = $(this), validationObj = elem.data("validation"), alertObj, offset = elem.offset(), height = parseFloat(elem.outerHeight());
-
-		if (!validationObj.visible) {
-			alertObj = $('<div class="input_alert ' + validationObj.position + ' ' + validationObj.level + '"><div class="arrow"></div><div class="message">' + validationObj.message + '</div></div>');
-			alertObj.css({ opacity: 0, top: (offset.top + (height - 15)) + 'px', left: (offset.left + 3) + 'px' });
-			$("body").append(alertObj);
-			alertObj.animate({ opacity: 1, top: '+=10' }, 250);
-			elem.unbind("keydown.validation blur.validation").one("keydown.validation blur.validation", function () { validationObj.visible = false; elem.data("validation", validationObj); alertObj.remove(); });
-			validationObj.visible = true;
-			elem.data("validation", validationObj);
-		}
-	};
-
-	$("form").bind("submit", checkForm);
+	$("form").attr("novalidate", true).bind("submit", $.validate);
 })(jQuery);
